@@ -748,6 +748,22 @@ export async function setCustomerWeightDetails(orderId: string, weight: number, 
                 customerWeightCost: newCustomerTotalCostLYD,
                 companyWeightCostUSD: newCompanyTotalCostUSD,
             });
+
+            // Log Transaction if there is a difference
+            if (costDifference !== 0) {
+                const transactionRef = doc(collection(db, TRANSACTIONS_COLLECTION));
+                const newTransaction = {
+                    orderId: orderId,
+                    customerId: orderData.userId,
+                    customerName: orderData.customerName,
+                    date: new Date().toISOString(),
+                    type: 'order', // Using 'order' type as it affects the order value/debt
+                    status: 'completed',
+                    amount: costDifference, // Can be negative for reductions
+                    description: `تعديل وزن الزبون: ${weight} كجم (السابق: ${(oldCustomerWeightCost / (customerPricePerKilo || 1)).toFixed(2)} كجم)`
+                };
+                transaction.set(transactionRef, newTransaction);
+            }
         });
 
         const orderSnap = await getDoc(orderRef);
