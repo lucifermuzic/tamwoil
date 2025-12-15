@@ -19,7 +19,8 @@ export const dbAdapter = {
                 const docs = data.map((doc: any) => ({
                     id: doc.id,
                     ...doc,
-                    data: () => doc
+                    data: () => doc,
+                    ref: dbAdapter.doc(collectionName, doc.id)
                 }));
 
                 return {
@@ -151,7 +152,8 @@ export const dbAdapter = {
         const docs = (data || []).map((doc: any) => ({
             id: doc.id,
             ...doc,
-            data: () => doc
+            data: () => doc,
+            ref: dbAdapter.doc(collectionName, doc.id)
         }));
 
         return {

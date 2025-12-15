@@ -158,7 +158,7 @@ export default function LoginPage() {
                             className="mx-auto mb-8 drop-shadow-2xl brightness-0 invert"
                         />
                     </motion.div>
-                    <h1 className="text-4xl font-bold text-white mb-6">مكتب تمويل لخدمات النقل</h1>
+                    <h1 className="text-4xl font-bold text-white mb-6">شركة تمويل لخدمات النقل</h1>
                     <p className="text-xl text-sky-100/80 leading-relaxed">
                         شريكك الموثوق في عالم الخدمات اللوجستية. نضمن وصول شحناتك بأمان وسرعة إلى وجهتها.
                     </p>
