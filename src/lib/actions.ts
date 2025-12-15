@@ -713,13 +713,11 @@ export async function addCustomerShippingCost(orderId: string, costInUSD: number
     }
 }
 
-export async function addCustomerWeightCostLYD(orderId: string, weight: number, companyPricePerKiloUSD: number, customerPricePerKilo: number): Promise<boolean> {
-    if (weight <= 0) return false;
+export async function setCustomerWeightDetails(orderId: string, weight: number, companyPricePerKiloUSD: number, customerPricePerKilo: number): Promise<boolean> {
+    if (weight < 0) return false; // Allow 0 to potentially clear it? Let's assume non-negative.
     const orderRef = doc(db, ORDERS_COLLECTION, orderId);
 
     try {
-        const batch = writeBatch(db);
-
         await runTransaction(db, async (transaction) => {
             const orderDoc = await transaction.get(orderRef);
             if (!orderDoc.exists()) {
@@ -728,28 +726,30 @@ export async function addCustomerWeightCostLYD(orderId: string, weight: number, 
 
             const orderData = orderDoc.data() as Order;
             const currentSellingPrice = orderData.sellingPriceLYD || 0;
-            const currentWeightCost = orderData.customerWeightCost || 0;
-            const currentCompanyWeightCostUSD = orderData.companyWeightCostUSD || 0;
+            const currentRemaining = orderData.remainingAmount || 0;
 
-            const customerTotalCostLYD = weight * customerPricePerKilo;
-            const companyTotalCostUSD = weight * companyPricePerKiloUSD;
+            // Previous values
+            const oldCustomerWeightCost = orderData.customerWeightCost || 0;
+            // No need to check old company cost for the delta of debt/selling price, only customer cost affects user wallet.
 
-            const newSellingPrice = currentSellingPrice + customerTotalCostLYD;
-            const newCustomerWeightCost = currentWeightCost + customerTotalCostLYD;
-            const newCompanyWeightCostUSD = currentCompanyWeightCostUSD + companyTotalCostUSD;
+            // New values
+            const newCustomerTotalCostLYD = weight * customerPricePerKilo;
+            const newCompanyTotalCostUSD = weight * companyPricePerKiloUSD;
+
+            // Delta
+            const costDifference = newCustomerTotalCostLYD - oldCustomerWeightCost;
 
             transaction.update(orderRef, {
-                sellingPriceLYD: newSellingPrice,
-                remainingAmount: increment(customerTotalCostLYD),
+                sellingPriceLYD: currentSellingPrice + costDifference,
+                remainingAmount: currentRemaining + costDifference,
                 weightKG: weight,
                 companyPricePerKiloUSD: companyPricePerKiloUSD,
                 customerPricePerKilo: customerPricePerKilo,
-                customerWeightCost: newCustomerWeightCost,
-                companyWeightCostUSD: newCompanyWeightCostUSD,
+                customerWeightCost: newCustomerTotalCostLYD,
+                companyWeightCostUSD: newCompanyTotalCostUSD,
             });
         });
 
-        // Update stats
         const orderSnap = await getDoc(orderRef);
         if (orderSnap.exists()) {
             const userId = orderSnap.data().userId;
@@ -760,7 +760,7 @@ export async function addCustomerWeightCostLYD(orderId: string, weight: number, 
 
         return true;
     } catch (error) {
-        console.error("Error in addCustomerWeightCostLYD:", error);
+        console.error("Error in setCustomerWeightDetails:", error);
         return false;
     }
 }

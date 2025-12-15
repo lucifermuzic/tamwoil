@@ -38,7 +38,7 @@ import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from "@/components/ui/use-toast";
 import { Order, OrderStatus, Representative, AppSettings } from '@/lib/types';
-import { getOrders, updateOrder, deleteOrder, addTransaction, getRepresentatives, assignRepresentativeToOrder, unassignRepresentativeFromOrder, bulkDeleteOrders, bulkUpdateOrdersStatus, getAppSettings, addCustomerWeightCostLYD } from '@/lib/actions';
+import { getOrders, updateOrder, deleteOrder, addTransaction, getRepresentatives, assignRepresentativeToOrder, unassignRepresentativeFromOrder, bulkDeleteOrders, bulkUpdateOrdersStatus, getAppSettings, setCustomerWeightDetails } from '@/lib/actions';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -298,7 +298,7 @@ const AdminOrdersPage = () => {
     if (!currentOrder || weightKg <= 0) return;
 
     try {
-      await addCustomerWeightCostLYD(currentOrder.id, weightKg, companyKiloPriceUSD, customerKiloPrice);
+      await setCustomerWeightDetails(currentOrder.id, weightKg, companyKiloPriceUSD, customerKiloPrice);
 
       const customerTotalLYD = weightKg * customerKiloPrice;
       const companyTotalUSD = weightKg * companyKiloPriceUSD;
